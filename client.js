@@ -30,8 +30,8 @@ const authServer = {
  * client_secret: oauth-client-secret-1
  */
 const client = {
-	"client_id": "", //TODO
-	"client_secret": "", //TODO
+	"client_id": "oauth-client-1", //TODO
+	"client_secret": "oauth-client-secret-1", //TODO
 	"redirect_uris": ["http://localhost:9000/callback"]
 }
 
@@ -60,7 +60,8 @@ app.get('/authorize', (req, res) => {
 
 	hint: use res.redirect
  */
-
+	res.redirect(302, authServer.authorizationEndpoint + '?response_type=code&scope=foo&client_id=' + 
+					  client.client_id + '&redirect_uri=' + client.redirect_uris)
 })
 
 app.get('/callback', (req, res) => {
@@ -68,7 +69,7 @@ app.get('/callback', (req, res) => {
 // STEP 2: Parse the response from the authorization server and get a token
 
 	// Step 2.1: retrieve code from the req.query parameters object
-	let code = ''//TODO
+	let code = req.query.code//TODO
 
 	// Step 2.2: send the code to the token endpoint of the authorization server
 	// this should be done using a Basic Auth (with the client_id as username and client_secret as password)
@@ -81,25 +82,26 @@ app.get('/callback', (req, res) => {
 
 	let headers = {
 		'Content-Type':'application/x-www-form-urlencoded',
-		'Authorization': '' //TODO Basic Auth hints: you can use the encodeClientCredentials methode provided below)		
+		'Authorization': 'Bearer ' + encodeClientCredentials(client.client_id, client.client_secret) //TODO Basic Auth hints: you can use the encodeClientCredentials methode provided below)		
 	}
 
 	// Step 2.3: make a synchronize (for the sake of simplicity) request to the appropriate endpoint
-	let tokRes = request('TODO Which HTTP Verb?', 'TODO Which Endpoint?', {
+	let tokRes = request('POST', authServer.tokenEndpoint, {
 		headers: headers,
 		body: form_data
 	})
 
 	// Step 2.4: parse the body of tokRes
 	// hint: tokRes.getBody() to retrieve the body
-	let body = '' // TODO
+	let body = JSON.parse(tokRes.getBody().toString()) // TODO
 	/* body should be something like:
 	{ 
 		access_token: 'NGoMQgGfvjiJbp385Ox9tp1nQY9r3zlw',
 		token_type: 'Bearer',
 		scope: ''
 	}
-*/
+*/	
+
 	access_token = body.access_token
 	res.render('index', {access_token: access_token, scope: body.scope})
 })
@@ -116,7 +118,7 @@ app.get('/fetch_resource', (req, res) => {
 	let headers = {
 		// Step 3.1: Use the acess token with a Bearer authorization type
 		// see https://tools.ietf.org/html/rfc6750#page-5
-		'Authorization': '' //TODO
+		'Authorization': 'Bearer ' + access_token //TODO
 	}
 
 	// Step 3.2: send the request with the bearer authorization
