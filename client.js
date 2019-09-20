@@ -16,8 +16,8 @@ app.set('views', 'files/client')
 
 // authorization server information
 const authServer = {
-	authorizationEndpoint: 'http://oauth-authorizationserver.igpolytech.fr/authorize',
-	tokenEndpoint: 'http://oauth-authorizationserver.igpolytech.fr/token'
+	authorizationEndpoint: 'https://github.com/login/oauth/authorize',
+	tokenEndpoint: 'https://github.com/login/oauth/access_token'
 }
 
 // client information
@@ -30,12 +30,12 @@ const authServer = {
  * client_secret: oauth-client-secret-1
  */
 const client = {
-	"client_id": "oauth-client-1", //TODO
-	"client_secret": "oauth-client-secret-1", //TODO
+	"client_id": "c56a84da008b30c164cc", //TODO
+	"client_secret": "98bdc413d47de4f49515c6352d289329c5080f3c", //TODO
 	"redirect_uris": ["http://localhost:9000/callback"]
 }
 
-const protectedResource = 'http://oauth-protectedresource.igpolytech.fr/resource'
+const protectedResource = 'https://api.github.com/user'
 
 let state, access_token, scope = null
 
@@ -60,7 +60,7 @@ app.get('/authorize', (req, res) => {
 
 	hint: use res.redirect
  */
-	res.redirect(302, authServer.authorizationEndpoint + '?response_type=code&scope=foo&client_id=' + 
+	res.redirect(302, authServer.authorizationEndpoint + '?login=nyandams&response_type=code&state=redux&scope=repo&client_id=' + 
 					  client.client_id + '&redirect_uri=' + client.redirect_uris)
 })
 
@@ -77,11 +77,13 @@ app.get('/callback', (req, res) => {
 	let form_data = qs.stringify({
 		grant_type: 'authorization_code', // the type of authorization grant
 		code: code,
+		client_id: client.client_id,
+		client_secret: client.client_secret,
 		redirect_uris: client.redirect_uris[0]
 	})
 
 	let headers = {
-		'Content-Type':'application/x-www-form-urlencoded',
+		'Accept':'application/json',
 		'Authorization': 'Bearer ' + encodeClientCredentials(client.client_id, client.client_secret) //TODO Basic Auth hints: you can use the encodeClientCredentials methode provided below)		
 	}
 
@@ -93,6 +95,7 @@ app.get('/callback', (req, res) => {
 
 	// Step 2.4: parse the body of tokRes
 	// hint: tokRes.getBody() to retrieve the body
+	
 	let body = JSON.parse(tokRes.getBody().toString()) // TODO
 	/* body should be something like:
 	{ 
@@ -118,11 +121,13 @@ app.get('/fetch_resource', (req, res) => {
 	let headers = {
 		// Step 3.1: Use the acess token with a Bearer authorization type
 		// see https://tools.ietf.org/html/rfc6750#page-5
-		'Authorization': 'Bearer ' + access_token //TODO
+		'Authorization': 'token ' + access_token, //TODO
+		'User-Agent': 'test'
 	}
+	console.log('token ' + access_token)
 
 	// Step 3.2: send the request with the bearer authorization
-	let resource = request('POST', protectedResource, {
+	let resource = request('GET', protectedResource, {
 		headers: headers
 	})
 
